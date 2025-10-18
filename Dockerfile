@@ -30,7 +30,10 @@ FROM php:8.2-fpm-alpine AS production
 WORKDIR /var/www/html
 
 # Install necessary PHP extensions for runtime
-RUN apk add --no-cache libzip-dev libpng-dev \
+RUN apk add --no-cache \
+      libzip-dev \
+      libpng-dev \
+      oniguruma-dev \
     && docker-php-ext-install pdo_mysql mbstring zip bcmath
 
 # Copy built app + assets
@@ -42,3 +45,4 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 9000
 CMD ["php-fpm"]
+
