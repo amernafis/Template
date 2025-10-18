@@ -1,6 +1,14 @@
 # Release Notes
 
-## [Unreleased](https://github.com/laravel/laravel/compare/v12.7.0...12.x)
+## [Unreleased](https://github.com/laravel/laravel/compare/v1.0.0...main)
+
+## [v1.0.0](https://github.com/laravel/laravel/compare/v12.7.0...v1.0.0) - 2025-10-18
+
+### 1.0.0 (2025-10-18)
+
+##### Features
+
+* Added Dockerfile and CI/CD Pipeline ([2494b9f](https://github.com/amernafis/Template/commit/2494b9f8de21d5d93a99653cfc39f2bdae4f3ca3))
 
 ## [v12.7.0](https://github.com/laravel/laravel/compare/v12.6.0...v12.7.0) - 2025-10-14
 
