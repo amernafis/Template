@@ -1,22 +1,23 @@
-# Stage 1: Build PHP dependencies
+# Stage 1: PHP + Composer build
 FROM php:8.2-fpm AS build
 
 WORKDIR /app
 
-# Install required system packages and PHP extensions
 RUN apt-get update && apt-get install -y \
     git unzip libzip-dev libpng-dev libonig-dev libxml2-dev \
     && docker-php-ext-install pdo_mysql mbstring zip bcmath
 
-# Copy Composer binary
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy composer files and install dependencies (cached)
+# Install dependencies without running Laravel scripts
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts
 
-# Copy app source code
+# Copy source code AFTER dependencies
 COPY . .
+
+# Now run scripts safely
+RUN composer install --no-dev --optimize-autoloader
 
 # Stage 2: Node build for assets
 FROM node:20-alpine AS nodebuild
