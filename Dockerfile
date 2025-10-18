@@ -1,31 +1,44 @@
-# Stage 1: Composer dependencies
-FROM composer:2 AS vendor
+# Stage 1: Build PHP dependencies
+FROM php:8.2-fpm AS build
+
 WORKDIR /app
+
+# Install required system packages and PHP extensions
+RUN apt-get update && apt-get install -y \
+    git unzip libzip-dev libpng-dev libonig-dev libxml2-dev \
+    && docker-php-ext-install pdo_mysql mbstring zip bcmath
+
+# Copy Composer binary
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Copy composer files and install dependencies (cached)
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-# Stage 2: Node build
-FROM node:20 AS frontend
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+# Copy app source code
 COPY . .
-RUN npm run build
 
-# Stage 3: Runtime
-FROM php:8.2-fpm-alpine
+# Stage 2: Node build for assets
+FROM node:20-alpine AS nodebuild
+WORKDIR /app
+COPY --from=build /app ./
+RUN npm ci && npm run build
+
+# Stage 3: Production runtime
+FROM php:8.2-fpm-alpine AS production
+
 WORKDIR /var/www/html
 
-RUN apk add --no-cache bash libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev icu-dev libxml2-dev zip unzip \
-    && docker-php-ext-configure gd --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl zip
+# Install necessary PHP extensions for runtime
+RUN apk add --no-cache libzip-dev libpng-dev \
+    && docker-php-ext-install pdo_mysql mbstring zip bcmath
 
-COPY . .
-COPY --from=vendor /app/vendor ./vendor
-COPY --from=frontend /app/public/build ./public/build
+# Copy built app + assets
+COPY --from=build /app ./
+COPY --from=nodebuild /app/public/build ./public/build
 
-RUN addgroup -g 1000 laravel && adduser -G laravel -u 1000 -D laravel && chown -R laravel:laravel /var/www/html
-USER laravel
+# Set permissions for Laravel storage & cache
+RUN chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 9000
 CMD ["php-fpm"]
