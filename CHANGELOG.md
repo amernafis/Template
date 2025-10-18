@@ -1,6 +1,14 @@
 # Release Notes
 
-## [Unreleased](https://github.com/laravel/laravel/compare/v1.0.0...main)
+## [Unreleased](https://github.com/laravel/laravel/compare/v1.0.1...main)
+
+## [v1.0.1](https://github.com/laravel/laravel/compare/v1.0.0...v1.0.1) - 2025-10-18
+
+### [1.0.1](https://github.com/amernafis/Template/compare/v1.0.0...v1.0.1) (2025-10-18)
+
+#### Bug Fixes
+
+* Updated Dockerfile ([f227f4c](https://github.com/amernafis/Template/commit/f227f4c8827869b1c13c7ef177d612f5a9911af3))
 
 ## [v1.0.0](https://github.com/laravel/laravel/compare/v12.7.0...v1.0.0) - 2025-10-18
 
