@@ -1,49 +1,25 @@
-# Stage 1: PHP + Composer build
-FROM php:8.2-fpm AS build
+# Use official PHP image with required extensions
+FROM php:8.3-cli
 
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y \
-    git unzip libzip-dev libpng-dev libonig-dev libxml2-dev \
-    && docker-php-ext-install pdo_mysql mbstring zip bcmath
-
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Install dependencies without running Laravel scripts
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts
-
-# Copy source code AFTER dependencies
-COPY . .
-
-# Now run scripts safely
-RUN composer install --no-dev --optimize-autoloader
-
-# Stage 2: Node build for assets
-FROM node:20-alpine AS nodebuild
-WORKDIR /app
-COPY --from=build /app ./
-RUN npm ci && npm run build
-
-# Stage 3: Production runtime
-FROM php:8.2-fpm-alpine AS production
-
+# Set working directory
 WORKDIR /var/www/html
 
-# Install necessary PHP extensions for runtime
-RUN apk add --no-cache \
-      libzip-dev \
-      libpng-dev \
-      oniguruma-dev \
-    && docker-php-ext-install pdo_mysql mbstring zip bcmath
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
+    zip unzip git curl libzip-dev libpng-dev \
+    && docker-php-ext-install pdo pdo_mysql zip
 
-# Copy built app + assets
-COPY --from=build /app ./
-COPY --from=nodebuild /app/public/build ./public/build
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Set permissions for Laravel storage & cache
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Copy project files
+COPY . .
 
-EXPOSE 9000
-CMD ["php-fpm"]
+# Install dependencies
+RUN composer install --no-interaction --no-scripts --no-progress
 
+# Expose Laravel port
+EXPOSE 8000
+
+# Run Laravel dev server
+CMD php artisan serve --host=0.0.0.0 --port=8000
