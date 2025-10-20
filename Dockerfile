@@ -32,6 +32,12 @@ COPY . /var/www/html
 RUN composer install --no-interaction --no-plugins --no-scripts
 RUN npm install && npm run build
 
+# Clear caches
+RUN php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan cache:clear
+
+# Rebuild optimized caches (for faster production startup)
+RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
+
 EXPOSE 9000
 
 ENTRYPOINT ["docker-entrypoint.sh"]
