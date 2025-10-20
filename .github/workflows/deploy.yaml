@@ -8,39 +8,39 @@ on:
       - main
 
 jobs:
-  # versioning-and-release:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: write
-  #   outputs:
-  #     new-version: ${{ steps.semantic-release.outputs.new_release_version }}
+  versioning-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      new-version: ${{ steps.semantic-release.outputs.new_release_version }}
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-  #     - name: Create Semantic Release config
-  #       run: |
-  #         echo '{
-  #           "branches": ["main"],
-  #           "plugins": [
-  #             "@semantic-release/commit-analyzer",
-  #             "@semantic-release/release-notes-generator",
-  #             "@semantic-release/github"
-  #           ]
-  #         }' > .releaserc.json
+      - name: Create Semantic Release config
+        run: |
+          echo '{
+            "branches": ["main"],
+            "plugins": [
+              "@semantic-release/commit-analyzer",
+              "@semantic-release/release-notes-generator",
+              "@semantic-release/github"
+            ]
+          }' > .releaserc.json
 
-  #     - name: Semantic Release
-  #       id: semantic-release
-  #       uses: cycjimmy/semantic-release-action@v3
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GHCR_PAT }}
+      - name: Semantic Release
+        id: semantic-release
+        uses: cycjimmy/semantic-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_PAT }}
 
   build-and-push:
     runs-on: ubuntu-latest
     needs: versioning-and-release
-    # env:
-    #   NEW_VERSION: ${{ needs.versioning-and-release.outputs.new-version }}
+    env:
+      NEW_VERSION: ${{ needs.versioning-and-release.outputs.new-version }}
 
     steps:
       - name: Checkout repository
