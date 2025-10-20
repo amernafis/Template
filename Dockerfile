@@ -13,7 +13,9 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     nodejs \
     npm \
-    netcat-traditional
+    netcat-traditional \
+    nginx \
+    supervisor
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -21,7 +23,6 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy the entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
@@ -32,7 +33,15 @@ COPY . /var/www/html
 RUN composer install --no-interaction --no-plugins --no-scripts
 RUN npm install && npm run build
 
-EXPOSE 9000
+# Nginx config
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["php-fpm"]
+# Supervisor config to run PHP-FPM + Nginx
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Expose port
+EXPOSE 80
+
+# Entrypoint
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-n"]
