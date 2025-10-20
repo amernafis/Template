@@ -1,6 +1,6 @@
 FROM php:8.3-fpm
 
-WORKDIR /var/www/html
+WORKDIR /home/site/wwwroot
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -23,23 +23,18 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY . /home/site/wwwroot
 
-# Copy application files
-COPY . /var/www/html
-
-# Install dependencies and build assets
 RUN composer install --no-interaction --no-plugins --no-scripts
 RUN npm install && npm run build
 
-# Nginx config
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
-# Supervisor config to run PHP-FPM + Nginx
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Expose port
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 80
 
 # Entrypoint
