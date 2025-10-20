@@ -30,4 +30,15 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 # fi
 
 # Execute the provided command (which is typically php-fpm)
+
+echo "Clearing and caching Laravel..."
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
 exec "$@"
