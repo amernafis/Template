@@ -1,6 +1,6 @@
 FROM php:8.3-fpm
 
-WORKDIR /home/site/wwwroot
+WORKDIR /var/www/html
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -23,7 +23,7 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY . /home/site/wwwroot
+COPY . /var/www/html
 
 RUN composer install --no-interaction --no-plugins --no-scripts
 RUN npm install && npm run build
