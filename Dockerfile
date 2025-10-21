@@ -1,42 +1,21 @@
 FROM php:8.3-fpm
 
-WORKDIR /var/www/html
+WORKDIR /home/site/wwwroot
 
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    libzip-dev \
-    nodejs \
-    npm \
-    netcat-traditional \
-    nginx \
-    supervisor
-
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+    git curl libpng-dev libonig-dev libxml2-dev zip unzip libzip-dev nodejs npm \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY . /home/site/wwwroot
 
-COPY . /var/www/html
-
-RUN composer install --no-interaction --no-plugins --no-scripts
-RUN npm install && npm run build
-
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
-
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN composer install --no-interaction --no-plugins --no-scripts && \
+    npm install && npm run build
 
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-EXPOSE 80
-
-# Entrypoint
+EXPOSE 9000
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["/usr/bin/supervisord", "-n"]
+CMD ["php-fpm"]
