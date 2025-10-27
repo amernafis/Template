@@ -1,42 +1,46 @@
 FROM php:8.3-fpm
 
-# set your user name, ex: user=carlos
-ARG user=yourusername
-ARG uid=1000
-
-# Install system dependencies
+# --- System dependencies ---
 RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
     git \
     curl \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip
+    unzip && \
+    docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets
-
-# Get latest Composer
+# --- Install Composer ---
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Create system user to run Composer and Artisan Commands
-RUN useradd -G www-data,root -u $uid -d /home/$user $user
-RUN mkdir -p /home/$user/.composer && \
-    chown -R $user:$user /home/$user
+# --- Node.js for npm build (optional) ---
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm
 
-# Install redis
-RUN pecl install -o -f redis \
-    &&  rm -rf /tmp/pear \
-    &&  docker-php-ext-enable redis
-
-# Set working directory
+# --- Copy Laravel app ---
 WORKDIR /var/www
+COPY . .
 
-# Copy custom configurations PHP
+# --- Install dependencies ---
+RUN composer install --no-dev --optimize-autoloader
+RUN npm install && npm run build || true
+
+# --- Nginx config ---
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+
+# --- PHP config ---
 COPY docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
 
-USER $user
+# --- Supervisor config (to run both Nginx + PHP-FPM) ---
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# --- Permissions ---
+RUN chown -R www-data:www-data /var/www
+
+EXPOSE 80
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
