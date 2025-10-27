@@ -30,7 +30,7 @@ COPY . .
 
 # --- Install dependencies ---
 RUN composer install --no-dev --optimize-autoloader
-RUN npm install && npm run build || true
+RUN npm install && npm run build
 
 # --- Nginx config ---
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
