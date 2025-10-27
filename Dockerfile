@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip && \
     docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets && \
+    rm /etc/nginx/sites-enabled/default && \
+    rm -rf /usr/share/nginx/html && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --- Install Composer ---
